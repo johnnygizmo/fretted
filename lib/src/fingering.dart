@@ -126,4 +126,9 @@ class Fingering {
       text: json['text'] as String?,
     );
   }
+
+  @override
+  String toString() {
+    return "String:$string\nFret:$fret\nText:$text";
+  }
 }

@@ -29,11 +29,12 @@ class FretBlockDiagram extends ConsumerWidget {
       this.startFret,
       this.spellWith = music.Accidental.sharp,
       this.fontFamily = "packages/fretted/MuseJazzText",
-      this.onClick});
+      this.onClick,
+      this.onLongPress,
+      this.updateName});
 
   final Fretboard fretboard;
   final String name;
-
   final int? startFret;
 
   /// Widget Height
@@ -73,7 +74,10 @@ class FretBlockDiagram extends ConsumerWidget {
   final bool showPitch;
   final music.Accidental spellWith;
 
-  final Function(int string, int fret, double distance)? onClick;
+  final Function(int string, int? fret, double distance)? onClick;
+  final Function(int string, int? fret, double distance)? onLongPress;
+  final Function(String name, int? startFret, int? frets, int? strings)?
+      updateName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -95,34 +99,157 @@ class FretBlockDiagram extends ConsumerWidget {
     double shapeRadius = (markerSize ?? stringSpacing * .45) as double;
     return Column(
       children: [
-        Text(name + extension,
+        GestureDetector(
+          onDoubleTap: () {
+            final textController = TextEditingController(text: fretboard.name);
+            final textController2 =
+                TextEditingController(text: fretboard.startFret.toString());
+            final textController3 =
+                TextEditingController(text: fretboard.frets.toString());
+            final textController4 =
+                TextEditingController(text: fretboard.strings.toString());
+            showDialog(
+              context: context,
+              builder: (dialogContext) {
+                return AlertDialog(
+                  title: const Text('Edit Fretboard'),
+                  content: Column(
+                    children: [
+                      Text("Name"),
+                      TextField(controller: textController),
+                      Text("Frets"),
+                      TextField(controller: textController3),
+                      Text("Strings"),
+                      TextField(controller: textController4),
+                      Text("Starting Fret"),
+                      TextField(controller: textController2),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        if (updateName != null) {
+                          updateName!(
+                            textController.text,
+                            int.tryParse(textController2.text),
+                            int.tryParse(textController3.text),
+                            int.tryParse(textController4.text),
+                          );
+                        }
+                        Navigator.of(dialogContext).pop();
+                      },
+                      child: const Text('Save'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+          child: Text(
+            '${fretboard.name}$extension',
             style: TextStyle(
-                fontSize: headerSize,
-                color: Colors.black,
-                fontFamily: fontFamily)),
+              fontSize: headerSize,
+              color: Colors.black,
+              fontFamily: fontFamily,
+            ),
+          ),
+        ),
         if (fretboard.capo > 0) Text("Capo ${fretboard.capo}"),
         SizedBox(height: 18),
-        GestureDetector(
-          onTapDown: (details) {
-            var fbpos1 =
-                (details.localPosition - Offset(fbPadding.left, fbPadding.top));
-            var fbpos = Offset((fbpos1.dx / stringSpacing).roundToDouble(),
-                (fbpos1.dy / fretSpacing).roundToDouble());
+        Container(
+          //ecoration: BoxDecoration(border: Border.all(color: Colors.black)),
+          child: GestureDetector(
+            onTapDown: (details) {
+              print(details.localPosition.toString());
+              var fbpos1 = (details.localPosition -
+                  Offset(fbPadding.left, fbPadding.top));
 
-            if (onClick != null) {
-              Offset actualPos = Offset(fbpos.dx * stringSpacing,
-                  fbpos.dy * fretSpacing - fretSpacing / 2);
-              var distance = ((fbpos1 - actualPos).distanceSquared);
-              onClick!(fretboard.strings - (fbpos.dx as int), fbpos.dy as int,
-                  distance);
-            }
-          },
-          child: CustomPaint(
-            size: Size(width.toDouble(), height.toDouble()),
-            painter: FretboardPainter(this),
+              print(fbpos1.toString());
+
+              var fretString = Offset(
+                  (fbpos1.dx / stringSpacing).roundToDouble(),
+                  (fbpos1.dy / fretSpacing).ceilToDouble());
+
+              if (onClick != null) {
+                Offset actualPos = Offset(fretString.dx * stringSpacing,
+                    fretString.dy * fretSpacing - fretSpacing / 2);
+                var distance = ((fbpos1 - actualPos).distanceSquared);
+                onClick!(fretboard.strings - (fretString.dx as int),
+                    fretString.dy.abs() as int, distance);
+              }
+            },
+            onLongPressStart: (details) {
+              var fbpos = (details.localPosition -
+                  Offset(fbPadding.left, fbPadding.top));
+              var fretString = Offset(
+                  (fbpos.dx / stringSpacing).roundToDouble(),
+                  (fbpos.dy / fretSpacing).ceilToDouble());
+
+              if (onLongPress != null) {
+                Offset actualPos = Offset(fretString.dx * stringSpacing,
+                    fretString.dy * fretSpacing - fretSpacing / 2);
+                var distance = ((fbpos - actualPos).distanceSquared);
+                onLongPress!(fretboard.strings - (fretString.dx as int),
+                    fretString.dy as int, distance);
+              }
+            },
+            child: CustomPaint(
+              size: Size(width.toDouble(), height.toDouble()),
+              painter: FretboardPainter(this),
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  FretBlockDiagram copyWith({
+    Fretboard? fretboard,
+    String? name,
+    int? startFret,
+    int? height,
+    int? width,
+    EdgeInsets? padding,
+    int? frets,
+    String? extension,
+    double? headerSize,
+    int? markerSize,
+    Color? markerColor,
+    Color? markerTextColor,
+    Color? borderColor,
+    int? borderSize,
+    String? fontFamily,
+    bool? showPitch,
+    music.Accidental? spellWith,
+    Function(int string, int? fret, double distance)? onClick,
+    Function(int string, int? fret, double distance)? onLongPress,
+    Function(String name, int? startFret, int? frets, int? strings)? updateName,
+  }) {
+    return FretBlockDiagram(
+      fretboard: fretboard ?? this.fretboard,
+      name: name ?? this.name,
+      startFret: startFret ?? this.startFret,
+      height: height ?? this.height,
+      width: width ?? this.width,
+      padding: padding ?? this.padding,
+      frets: frets ?? this.frets,
+      extension: extension ?? this.extension,
+      headerSize: headerSize ?? this.headerSize,
+      markerSize: markerSize ?? this.markerSize,
+      markerColor: markerColor ?? this.markerColor,
+      markerTextColor: markerTextColor ?? this.markerTextColor,
+      borderColor: borderColor ?? this.borderColor,
+      borderSize: borderSize ?? this.borderSize,
+      fontFamily: fontFamily ?? this.fontFamily,
+      showPitch: showPitch ?? this.showPitch,
+      spellWith: spellWith ?? this.spellWith,
+      onClick: onClick ?? this.onClick,
+      onLongPress: onLongPress ?? this.onLongPress,
+      updateName: updateName ?? this.updateName,
     );
   }
 }

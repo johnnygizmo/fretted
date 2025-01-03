@@ -33,6 +33,39 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+
+  <script>
+    
+    console.log("Test666");
+    // Prevent breaking on pointer binding assertions
+    window.addEventListener('error', function (e) {
+      console.log("Test1");
+      if (e.message.includes('targetElement == domElement') ||
+        e.message.includes('The targeted input element must be the active input element')) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.warn('Suppressed pointer binding assertion:', e.message);
+        return true;
+      }
+    });
+
+    // Additional error handling for development
+    if (!window.console) window.console = {};
+    if (!window.console.error) window.console.error = function () { };
+    window.console.error = (function (old) {
+      
+      console.log("Test2");
+      return function (msg) {
+        if (msg && typeof msg === 'string' &&
+          (msg.includes('targetElement == domElement') ||
+            msg.includes('The targeted input element must be the active input element'))) {
+          return;
+        }
+        return old.apply(this, arguments);
+      };
+    })(window.console.error);
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

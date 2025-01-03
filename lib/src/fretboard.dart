@@ -93,7 +93,7 @@ class Fretboard {
     List<Pitch>? tunings,
     List<Fingering>? fingerings,
   }) {
-    return Fretboard(
+    var ret = Fretboard(
       name: name ?? this.name,
       strings: strings ?? this.strings,
       capo: capo ?? this.capo,
@@ -102,5 +102,7 @@ class Fretboard {
       tunings: tunings ?? this.tunings,
       fingerings: fingerings ?? this.fingerings,
     );
+    print(ret.frets.toString());
+    return ret;
   }
 }
