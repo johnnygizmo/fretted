@@ -65,7 +65,8 @@ class FretboardPainter extends CustomPainter {
           Colors.black,
           parent.fontFamily);
     }
-    for (var marker in parent.fretboard.fingerings) {
+    for (var marker in parent.fretboard.fingerings) {    
+
       var string = parent.fretboard.strings - marker.string;
       var x = fbPadding.left + (stringSpacing * string);
       double y = 0;

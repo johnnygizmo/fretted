@@ -17,7 +17,8 @@ class Fingering {
       this.textColor,
       this.fontFamily,
       this.shape,
-      this.text});
+      this.text,
+      this.colorInverted = false});
 
   /// The radius of the marker.
   int? radius;
@@ -58,6 +59,7 @@ class Fingering {
   /// 0 Open
   /// 1+ is fret
   int? fret;
+  bool colorInverted;
 
   /// Creates a copy of this marker but with the given fields replaced with the new values.
   Fingering copyWith({
@@ -73,6 +75,7 @@ class Fingering {
     int? fret,
     // int? barreLength,
     int? barre,
+    bool? colorInverted,
   }) {
     return Fingering(
       string: string ?? this.string,
@@ -86,6 +89,7 @@ class Fingering {
       fontFamily: fontFamily ?? this.fontFamily,
       shape: shape ?? this.shape,
       text: text ?? this.text,
+      colorInverted: colorInverted ?? this.colorInverted,
     );
   }
 
@@ -101,6 +105,7 @@ class Fingering {
         'fontFamily': fontFamily,
         'shape': shape?.toString().split('.').last,
         'text': text,
+        'colorInverted': colorInverted,
       };
 
   factory Fingering.fromJson(Map<String, dynamic> json) {
@@ -124,6 +129,7 @@ class Fingering {
               .firstWhere((e) => e.toString().split('.').last == json['shape'])
           : null,
       text: json['text'] as String?,
+      colorInverted: json['colorInverted'] as bool,
     );
   }
 

@@ -100,55 +100,7 @@ class FretBlockDiagram extends ConsumerWidget {
     return Column(
       children: [
         GestureDetector(
-          onDoubleTap: () {
-            final textController = TextEditingController(text: fretboard.name);
-            final textController2 =
-                TextEditingController(text: fretboard.startFret.toString());
-            final textController3 =
-                TextEditingController(text: fretboard.frets.toString());
-            final textController4 =
-                TextEditingController(text: fretboard.strings.toString());
-            showDialog(
-              context: context,
-              builder: (dialogContext) {
-                return AlertDialog(
-                  title: const Text('Edit Fretboard'),
-                  content: Column(
-                    children: [
-                      Text("Name"),
-                      TextField(controller: textController),
-                      Text("Frets"),
-                      TextField(controller: textController3),
-                      Text("Strings"),
-                      TextField(controller: textController4),
-                      Text("Starting Fret"),
-                      TextField(controller: textController2),
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        if (updateName != null) {
-                          updateName!(
-                            textController.text,
-                            int.tryParse(textController2.text),
-                            int.tryParse(textController3.text),
-                            int.tryParse(textController4.text),
-                          );
-                        }
-                        Navigator.of(dialogContext).pop();
-                      },
-                      child: const Text('Save'),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
+          
           child: Text(
             '${fretboard.name}$extension',
             style: TextStyle(

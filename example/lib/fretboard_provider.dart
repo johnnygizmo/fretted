@@ -35,6 +35,9 @@ class FretboardNotifier extends StateNotifier<Fretboard> {
   void clearFingerings() => state = state.copyWith(fingerings: []);
 
   void setCapo(int capo) => state = state.copyWith(capo: capo);
+  void setStartAt(int startAt) => state = state.copyWith(startFret: startAt);
+  void setStrings(int strings) => state = state.copyWith(strings: strings);
+  void setFrets(int frets) => state = state.copyWith(frets: frets);
 }
 
 final fretboardProvider =
