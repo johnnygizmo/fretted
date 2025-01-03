@@ -56,7 +56,8 @@ class MyHomePage extends ConsumerStatefulWidget {
 }
 
 class _MyHomePageState extends ConsumerState<MyHomePage> {
-  late TextEditingController _controller;
+  late TextEditingController _controller; 
+  late TextEditingController _extController; 
   final _focusNode = FocusNode();
 
   @override
@@ -64,7 +65,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     super.initState();
 
     _controller = TextEditingController(text: ref.read(fretboardProvider).name);
-
+    _extController = TextEditingController(text: ref.read(fretboardProvider).extension);
     var f = FretBlockDiagram(
       width: 300,
       height: 300,
@@ -318,8 +319,22 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                       },
                     ),
                   ),
-                ],
-              ),
+                
+                SizedBox(width: 50,),
+                Text("Extension: "),
+                SizedBox(width: 200,
+                  child: TextField(
+                    controller: _extController,
+                    focusNode: _focusNode,
+                    onChanged: (value) {
+                      var fb = ref.read(fretboardProvider);
+                  
+                      ref.read(fretboardProvider.notifier).updateFretboard(
+                          fb.copyWith(extension: value));
+                    },
+                  ),
+                ),
+              ],),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
@@ -449,7 +464,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                             } else {
                               ref.read(fretboardProvider.notifier).addFingering(
                                   Fingering(
-                                      string: string, fret: fret, text: ""));
+                                      string: string,
+                                      fret: fret,
+                                    
+                                      text: ""));
                             }
                           },
                         );
@@ -460,37 +478,46 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                     width: 50,
                   ),
                   SizedBox(
-                    width: 400,
+                    width: 500,
                     height: 500,
                     child: ListView.builder(
                       itemBuilder: (context, index) {
                         return Card(
+                          key: ValueKey((f.fingerings[index].string,f.fingerings[index].fret)),
                           child: ListTile(
                               trailing: SizedBox(
-                                width: 100,
+                                  width: 125,
                                 child: Row(
                                   children: [
-                                    if (f.fingerings[index].fret != null &&
-                                        f.fingerings[index].fret! > 0)
-                                      IconButton(
-                                          icon: Icon(Icons.palette),
-                                          tooltip: "Invert Color",
-                                          onPressed: () {
-                                            Fingering temp =
-                                                f.fingerings[index];
-                                            Fingering newFingering;
-
-                                            switch (temp.bgColor) {
-                                              case Colors.black:
-                                              case null:
-                                                newFingering = f
-                                                    .fingerings[index]
-                                                    .copyWith(
-                                                        bgColor: Colors.white,
-                                                        textColor: Colors.black,
-                                                        borderColor:
-                                                            Colors.black,
-                                                        borderSize: 2);
+                                    
+                                    if ( f.fingerings[index].fret != null && f.fingerings[index].fret! > 0)
+                                   IconButton(
+                                        icon: Icon(Icons.bar_chart),
+                                        tooltip: "Barre",
+                                        onPressed: () {                                          
+                                          Fingering temp = f.fingerings[index];                                
+                                          if(temp.barre == null){
+                                            ref
+                                              .read(fretboardProvider.notifier).setBarre(temp, true);
+                                          } else {
+                                             ref
+                                              .read(fretboardProvider.notifier).setBarre(temp, false);
+                                          }                                                       
+                                        }),
+                                    
+                                    if ( f.fingerings[index].fret != null && f.fingerings[index].fret! > 0)
+                                    IconButton(
+                                        icon: Icon(Icons.palette),
+                                        tooltip: "Invert Color",
+                                        onPressed: () {
+                                          
+                                           Fingering temp = f.fingerings[index];
+                                          Fingering newFingering;
+                                
+                                          switch(temp.bgColor){
+                                            case Colors.black:
+                                            case null:
+                                                newFingering = f.fingerings[index].copyWith(bgColor: Colors.white, textColor: Colors.black,borderColor: Colors.black, borderSize: 2);
                                                 break;
                                               default:
                                                 newFingering = f
@@ -502,19 +529,15 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                                                             Colors.black,
                                                         borderSize: 2);
                                                 break;
-                                            }
-
-                                            ref
-                                                .read(
-                                                    fretboardProvider.notifier)
-                                                .removeFingering(
-                                                    f.fingerings[index]);
-
-                                            ref
-                                                .read(
-                                                    fretboardProvider.notifier)
-                                                .addFingering(newFingering);
-                                          }),
+                                          }
+                                          
+                                          ref
+                                              .read(fretboardProvider.notifier)
+                                             .updateFingering(temp, newFingering);
+                                
+                                
+                                
+                                        }),
                                     IconButton(
                                         icon: Icon(Icons.delete),
                                         tooltip: "Delete",

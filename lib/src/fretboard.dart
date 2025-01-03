@@ -3,7 +3,9 @@ import 'package:music_notes/music_notes.dart';
 
 class Fretboard {
   Fretboard(
-      {this.name = "",
+      {
+      this.name = "",
+      this.extension = "",
       this.strings = 6,
       this.capo = 0,
       this.startFret = 1,
@@ -32,6 +34,7 @@ class Fretboard {
   }
 
   String name;
+  String extension;
   int strings;
   int capo;
   int startFret;
@@ -51,6 +54,7 @@ class Fretboard {
 
   Map<String, dynamic> toJson() => {
         'name': name,
+        'extension': extension,
         'strings': strings,
         'capo': capo,
         'startFret': startFret,
@@ -62,6 +66,7 @@ class Fretboard {
   factory Fretboard.fromJson(Map<String, dynamic> json) {
     return Fretboard(
       name: json['name'] as String? ?? '',
+      extension: json['extension'] as String? ?? '',
       strings: json['strings'] as int? ?? 6,
       capo: json['capo'] as int? ?? 0,
       frets: json['frets'] as int? ?? 4,
@@ -86,6 +91,7 @@ class Fretboard {
 
   Fretboard copyWith({
     String? name,
+    String? extension,
     int? strings,
     int? capo,
     int? startFret,
@@ -95,6 +101,7 @@ class Fretboard {
   }) {
     var ret = Fretboard(
       name: name ?? this.name,
+      extension: extension ?? this.extension,
       strings: strings ?? this.strings,
       capo: capo ?? this.capo,
       startFret: startFret ?? this.startFret,

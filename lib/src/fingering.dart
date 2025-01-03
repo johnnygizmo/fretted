@@ -77,11 +77,22 @@ class Fingering {
     int? barre,
     bool? colorInverted,
   }) {
+
+
+    int? barreConvert = 0;
+    if(barre == null){
+      barreConvert = this.barre;
+    } else if(barre == -1){
+      barreConvert = null;
+    } else {
+      barreConvert = barre;
+    }
+
     return Fingering(
       string: string ?? this.string,
       fret: fret ?? this.fret,
       radius: radius ?? this.radius,
-      barre: barre ?? this.barre,
+      barre:  barreConvert,
       bgColor: bgColor ?? this.bgColor,
       borderColor: borderColor ?? this.borderColor,
       borderSize: borderSize ?? this.borderSize,

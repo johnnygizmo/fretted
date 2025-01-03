@@ -5,7 +5,8 @@ import 'package:music_notes/music_notes.dart';
 class FretboardNotifier extends StateNotifier<Fretboard> {
   FretboardNotifier()
       : super(Fretboard(
-          name: 'Default',
+          name: 'C#',
+          extension: "maj7",
           strings: 6,
           capo: 0,
           startFret: 1,
@@ -32,12 +33,27 @@ class FretboardNotifier extends StateNotifier<Fretboard> {
         fingerings: state.fingerings.where((f) => f != fingering).toList());
   }
 
+  void removeFingeringByPlacement(int string, int fret) {
+    state = state.copyWith(
+        fingerings: state.fingerings.where((f) => f.string != string && f.fret != fret).toList());
+  }
+
+  void updateFingering(Fingering oldFingering, Fingering newFingering) {
+    state = state.copyWith(
+        fingerings: state.fingerings.map((f) => f == oldFingering ? newFingering : f).toList());
+  }
+
   void clearFingerings() => state = state.copyWith(fingerings: []);
 
   void setCapo(int capo) => state = state.copyWith(capo: capo);
   void setStartAt(int startAt) => state = state.copyWith(startFret: startAt);
   void setStrings(int strings) => state = state.copyWith(strings: strings);
   void setFrets(int frets) => state = state.copyWith(frets: frets);
+
+  void setBarre(Fingering fingering, bool barre){
+    state = state.copyWith(
+        fingerings: state.fingerings.map((f) => f == fingering ? f.copyWith(barre: barre ? 0 : -1) : f).toList());
+  }
 }
 
 final fretboardProvider =

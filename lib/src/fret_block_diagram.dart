@@ -99,17 +99,49 @@ class FretBlockDiagram extends ConsumerWidget {
     double shapeRadius = (markerSize ?? stringSpacing * .45) as double;
     return Column(
       children: [
-        GestureDetector(
-          
+
+
+
+Text.rich(
+  TextSpan(
+    children: [
+      TextSpan(
+        text: fretboard.name,
+        style: TextStyle(
+          fontSize: headerSize,
+          color: Colors.black,
+          fontFamily: fontFamily,
+        ),
+      ),
+      WidgetSpan(
+        alignment: PlaceholderAlignment.top,
+        child: Transform.translate(
+          offset: Offset(0, -headerSize * 0.9),
           child: Text(
-            '${fretboard.name}$extension',
+            fretboard.extension,
             style: TextStyle(
-              fontSize: headerSize,
+              fontSize: headerSize * 0.6,
               color: Colors.black,
               fontFamily: fontFamily,
             ),
           ),
         ),
+      ),
+    ],
+  ),
+)
+        ,
+          
+          
+          // Text(
+          //   '${fretboard.name}${fretboard.extension}',
+          //   style: TextStyle(
+          //     fontSize: headerSize,
+          //     color: Colors.black,
+          //     fontFamily: fontFamily,
+          //   ),
+          // ),
+        
         if (fretboard.capo > 0) Text("Capo ${fretboard.capo}"),
         SizedBox(height: 18),
         Container(
