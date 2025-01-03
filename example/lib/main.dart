@@ -28,7 +28,6 @@ final fretsProvider = StateProvider<int>((ref) {
   return 4;
 });
 
-
 GlobalKey _globalKey = GlobalKey();
 
 class MyApp extends StatelessWidget {
@@ -38,12 +37,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Fretboard Maker',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Fretboard Maker'),
     );
   }
 }
@@ -57,7 +56,7 @@ class MyHomePage extends ConsumerStatefulWidget {
 }
 
 class _MyHomePageState extends ConsumerState<MyHomePage> {
-  late TextEditingController _controller; 
+  late TextEditingController _controller;
   final _focusNode = FocusNode();
 
   @override
@@ -221,56 +220,57 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                           child: SpinBox(
                               min: 1,
                               max: 24,
-                              value: ref.read(fretboardProvider).frets.toDouble(),
+                              value:
+                                  ref.read(fretboardProvider).frets.toDouble(),
                               onChanged: (value) => ref
                                   .read(fretboardProvider.notifier)
                                   .setFrets(value.toInt())),
                         ),
-                        
                       ],
                     ),
                   ),
                   SizedBox(
-                width: 300,
-                child: Row(
-                  children: [
-                    Text("Capo At: "),
-                    SizedBox(
-                      width: 150,
-                      child: SpinBox(
-                          min: 0,
-                          max: 24,
-                          value: ref.read(fretboardProvider).capo.toDouble(),
-                          onChanged: (value) => ref
-                              .read(fretboardProvider.notifier)
-                              .setCapo(value.toInt())),
+                    width: 300,
+                    child: Row(
+                      children: [
+                        Text("Capo At: "),
+                        SizedBox(
+                          width: 150,
+                          child: SpinBox(
+                              min: 0,
+                              max: 24,
+                              value:
+                                  ref.read(fretboardProvider).capo.toDouble(),
+                              onChanged: (value) => ref
+                                  .read(fretboardProvider.notifier)
+                                  .setCapo(value.toInt())),
+                        ),
+                      ],
                     ),
-                    
-                  ],
-                ),
-              ),
-              SizedBox(
-                width: 300,
-                child: Row(
-                  children: [
-                    Text("Starting Fret: "),
-                    SizedBox(
-                      width: 150,
-                      child: SpinBox(
-                          min: 1,
-                          max: 24,
-                          value: ref.read(fretboardProvider).startFret.toDouble(),
-                          onChanged: (value) => ref
-                              .read(fretboardProvider.notifier)
-                              .setStartAt(value.toInt())),
+                  ),
+                  SizedBox(
+                    width: 300,
+                    child: Row(
+                      children: [
+                        Text("Starting Fret: "),
+                        SizedBox(
+                          width: 150,
+                          child: SpinBox(
+                              min: 1,
+                              max: 24,
+                              value: ref
+                                  .read(fretboardProvider)
+                                  .startFret
+                                  .toDouble(),
+                              onChanged: (value) => ref
+                                  .read(fretboardProvider.notifier)
+                                  .setStartAt(value.toInt())),
+                        ),
+                      ],
                     ),
-                    
-                  ],
-                ),
-              ),
+                  ),
                 ],
               ),
-               
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -281,7 +281,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                         ref.read(showPitchProvider.notifier).state = value;
                       }),
                   Text("Show Pitch"),
-                  SizedBox(width: 35,),
+                  SizedBox(
+                    width: 35,
+                  ),
                   Text("Spell with Flats"),
                   Switch(
                       value:
@@ -301,20 +303,23 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                Text("Title: "),
-                SizedBox(width: 200,
-                  child: TextField(
-                    controller: _controller,
-                    focusNode: _focusNode,
-                    onChanged: (value) {
-                      var fb = ref.read(fretboardProvider);
-                  
-                      ref.read(fretboardProvider.notifier).updateFretboard(
-                          fb.copyWith(name: value));
-                    },
+                  Text("Title: "),
+                  SizedBox(
+                    width: 200,
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      onChanged: (value) {
+                        var fb = ref.read(fretboardProvider);
+
+                        ref
+                            .read(fretboardProvider.notifier)
+                            .updateFretboard(fb.copyWith(name: value));
+                      },
+                    ),
                   ),
-                ),
-              ],),
+                ],
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
@@ -343,16 +348,16 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                                 .where(
                                     (f) => f.string == string && f.fret == fret)
                                 .firstOrNull;
-        
+
                             if (existingFinger == null) {
                               return;
                             }
-        
+
                             Color newBg = Colors.white;
                             Color newTxtColor = Colors.black;
                             Color borderColor = Colors.black;
                             int border = 2;
-        
+
                             if (existingFinger.bgColor == Colors.white) {
                               newBg = Colors.black;
                               newTxtColor = Colors.white;
@@ -362,7 +367,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                             ref
                                 .read(fretboardProvider.notifier)
                                 .removeFingering(existingFinger);
-        
+
                             ref.read(fretboardProvider.notifier).addFingering(
                                 existingFinger.copyWith(
                                     bgColor: newBg,
@@ -372,9 +377,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                           },
                           updateName: (name, fret, frets, strings) {
                             var fb = ref.read(fretboardProvider);
-        
-                            ref.read(fretboardProvider.notifier).updateFretboard(
-                                fb.copyWith(
+
+                            ref
+                                .read(fretboardProvider.notifier)
+                                .updateFretboard(fb.copyWith(
                                     name: name,
                                     startFret: fret,
                                     strings: strings,
@@ -382,9 +388,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                           },
                           onClick: (string, fret, distance) {
                             print("${string}, $fret, $distance");
-        
+
                             var fb = ref.read(fretboardProvider);
-        
+
                             var existingFinger = fb.fingerings
                                 .where((f) =>
                                     f.string == string &&
@@ -397,9 +403,11 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                                 ref
                                     .read(fretboardProvider.notifier)
                                     .removeFingering(existingFinger);
-        
-                                ref.read(fretboardProvider.notifier).addFingering(
-                                    Fingering(string: existingFinger.string));
+
+                                ref
+                                    .read(fretboardProvider.notifier)
+                                    .addFingering(Fingering(
+                                        string: existingFinger.string));
                               } else if (existingFinger.fret == null) {
                                 ref
                                     .read(fretboardProvider.notifier)
@@ -431,26 +439,26 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                                   ref
                                       .read(fretboardProvider.notifier)
                                       .removeFingering(existingFinger);
-        
+
                                   ref
                                       .read(fretboardProvider.notifier)
-                                      .addFingering(
-                                          existingFinger.copyWith(text: newText));
+                                      .addFingering(existingFinger.copyWith(
+                                          text: newText));
                                 }
                               }
                             } else {
                               ref.read(fretboardProvider.notifier).addFingering(
                                   Fingering(
-                                      string: string,
-                                      fret: fret,
-                                      text: ""));
+                                      string: string, fret: fret, text: ""));
                             }
                           },
                         );
                       }),
                     ),
                   ),
-                  SizedBox(width: 50,),
+                  SizedBox(
+                    width: 50,
+                  ),
                   SizedBox(
                     width: 400,
                     height: 500,
@@ -459,57 +467,69 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                         return Card(
                           child: ListTile(
                               trailing: SizedBox(
-                                  width: 100,
+                                width: 100,
                                 child: Row(
                                   children: [
-                                    
-                                    if ( f.fingerings[index].fret != null && f.fingerings[index].fret! > 0)
-                                    IconButton(
-                                        icon: Icon(Icons.palette),
-                                        tooltip: "Invert Color",
-                                        onPressed: () {
-                                          
-                                          Fingering temp = f.fingerings[index];
-                                          Fingering newFingering;
-                                
-                                          switch(temp.bgColor){
-                                            case Colors.black:
-                                            case null:
-                                                newFingering = f.fingerings[index].copyWith(bgColor: Colors.white, textColor: Colors.black,borderColor: Colors.black, borderSize: 2);
+                                    if (f.fingerings[index].fret != null &&
+                                        f.fingerings[index].fret! > 0)
+                                      IconButton(
+                                          icon: Icon(Icons.palette),
+                                          tooltip: "Invert Color",
+                                          onPressed: () {
+                                            Fingering temp =
+                                                f.fingerings[index];
+                                            Fingering newFingering;
+
+                                            switch (temp.bgColor) {
+                                              case Colors.black:
+                                              case null:
+                                                newFingering = f
+                                                    .fingerings[index]
+                                                    .copyWith(
+                                                        bgColor: Colors.white,
+                                                        textColor: Colors.black,
+                                                        borderColor:
+                                                            Colors.black,
+                                                        borderSize: 2);
                                                 break;
-                                            default:
-                                                newFingering = f.fingerings[index].copyWith(bgColor: Colors.black, textColor: Colors.white,borderColor: Colors.black, borderSize: 2);
+                                              default:
+                                                newFingering = f
+                                                    .fingerings[index]
+                                                    .copyWith(
+                                                        bgColor: Colors.black,
+                                                        textColor: Colors.white,
+                                                        borderColor:
+                                                            Colors.black,
+                                                        borderSize: 2);
                                                 break;
-                                          }
-                                          
-                                          ref
-                                              .read(fretboardProvider.notifier)
-                                              .removeFingering(f.fingerings[index]);
-                                            
-                                          ref
-                                              .read(fretboardProvider.notifier).addFingering(newFingering);
-                                
-                                
-                                
-                                
-                                        }),
+                                            }
+
+                                            ref
+                                                .read(
+                                                    fretboardProvider.notifier)
+                                                .removeFingering(
+                                                    f.fingerings[index]);
+
+                                            ref
+                                                .read(
+                                                    fretboardProvider.notifier)
+                                                .addFingering(newFingering);
+                                          }),
                                     IconButton(
                                         icon: Icon(Icons.delete),
                                         tooltip: "Delete",
                                         onPressed: () {
                                           ref
                                               .read(fretboardProvider.notifier)
-                                              .removeFingering(f.fingerings[index]);
+                                              .removeFingering(
+                                                  f.fingerings[index]);
                                         }),
                                   ],
                                 ),
                               ),
-                              subtitle: 
-                                  f.fingerings[index].text == "" ? Text("Text: Blank") :
-                                  
-                                  Text("Text: ${f.fingerings[index].text}")
-                                  
-                                  ,
+                              subtitle: f.fingerings[index].text == ""
+                                  ? Text("Text: Blank")
+                                  : Text("Text: ${f.fingerings[index].text}"),
                               title: Text(
                                   "String: ${f.fingerings[index].string}, Fret: ${f.fingerings[index].fret}")),
                         );
