@@ -56,8 +56,8 @@ class MyHomePage extends ConsumerStatefulWidget {
 }
 
 class _MyHomePageState extends ConsumerState<MyHomePage> {
-  late TextEditingController _controller; 
-  late TextEditingController _extController; 
+  late TextEditingController _controller;
+  late TextEditingController _extController;
   final _focusNode = FocusNode();
 
   @override
@@ -65,7 +65,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     super.initState();
 
     _controller = TextEditingController(text: ref.read(fretboardProvider).name);
-    _extController = TextEditingController(text: ref.read(fretboardProvider).extension);
+    _extController =
+        TextEditingController(text: ref.read(fretboardProvider).extension);
     var f = FretBlockDiagram(
       width: 300,
       height: 300,
@@ -319,22 +320,26 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                       },
                     ),
                   ),
-                
-                SizedBox(width: 50,),
-                Text("Extension: "),
-                SizedBox(width: 200,
-                  child: TextField(
-                    controller: _extController,
-                    focusNode: _focusNode,
-                    onChanged: (value) {
-                      var fb = ref.read(fretboardProvider);
-                  
-                      ref.read(fretboardProvider.notifier).updateFretboard(
-                          fb.copyWith(extension: value));
-                    },
+                  SizedBox(
+                    width: 50,
                   ),
-                ),
-              ],),
+                  Text("Extension: "),
+                  SizedBox(
+                    width: 200,
+                    child: TextField(
+                      controller: _extController,
+                      focusNode: _focusNode,
+                      onChanged: (value) {
+                        var fb = ref.read(fretboardProvider);
+
+                        ref
+                            .read(fretboardProvider.notifier)
+                            .updateFretboard(fb.copyWith(extension: value));
+                      },
+                    ),
+                  ),
+                ],
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
@@ -464,10 +469,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                             } else {
                               ref.read(fretboardProvider.notifier).addFingering(
                                   Fingering(
-                                      string: string,
-                                      fret: fret,
-                                    
-                                      text: ""));
+                                      string: string, fret: fret, text: ""));
                             }
                           },
                         );
@@ -477,87 +479,160 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                   SizedBox(
                     width: 50,
                   ),
-                  SizedBox(
-                    width: 500,
-                    height: 500,
-                    child: ListView.builder(
-                      itemBuilder: (context, index) {
-                        return Card(
-                          key: ValueKey((f.fingerings[index].string,f.fingerings[index].fret)),
-                          child: ListTile(
-                              trailing: SizedBox(
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 25, 0, 0),
+                    child: SizedBox(
+                      width: 500,
+                      height: 500,
+                      child: ListView.builder(
+                        itemBuilder: (context, index) {
+                          return Card(
+                            key: ValueKey((
+                              f.fingerings[index].string,
+                              f.fingerings[index].fret
+                            )),
+                            child: ListTile(
+                                trailing: SizedBox(
                                   width: 125,
-                                child: Row(
-                                  children: [
-                                    
-                                    if ( f.fingerings[index].fret != null && f.fingerings[index].fret! > 0)
-                                   IconButton(
-                                        icon: Icon(Icons.bar_chart),
-                                        tooltip: "Barre",
-                                        onPressed: () {                                          
-                                          Fingering temp = f.fingerings[index];                                
-                                          if(temp.barre == null){
+                                  child: Row(
+                                    children: [
+                                      if (f.fingerings[index].fret != null &&
+                                          f.fingerings[index].fret! > 0)
+                                        IconButton(
+                                            icon: Icon(Icons.bar_chart),
+                                            tooltip: "Barre",
+                                            onPressed: () {
+                                              Fingering temp =
+                                                  f.fingerings[index];
+                                              if (temp.barre == null) {
+                                                ref
+                                                    .read(fretboardProvider
+                                                        .notifier)
+                                                    .setBarre(temp, true);
+                                              } else {
+                                                ref
+                                                    .read(fretboardProvider
+                                                        .notifier)
+                                                    .setBarre(temp, false);
+                                              }
+                                            }),
+                                      if (f.fingerings[index].fret != null &&
+                                          f.fingerings[index].fret! > 0)
+                                        IconButton(
+                                            icon: Icon(Icons.palette),
+                                            tooltip: "Invert Color",
+                                            onPressed: () {
+                                              Fingering temp =
+                                                  f.fingerings[index];
+                                              Fingering newFingering;
+
+                                              switch (temp.bgColor) {
+                                                case Colors.black:
+                                                case null:
+                                                  newFingering = f
+                                                      .fingerings[index]
+                                                      .copyWith(
+                                                          bgColor: Colors.white,
+                                                          textColor:
+                                                              Colors.black,
+                                                          borderColor:
+                                                              Colors.black,
+                                                          borderSize: 2);
+                                                  break;
+                                                default:
+                                                  newFingering = f
+                                                      .fingerings[index]
+                                                      .copyWith(
+                                                          bgColor: Colors.black,
+                                                          textColor:
+                                                              Colors.white,
+                                                          borderColor:
+                                                              Colors.black,
+                                                          borderSize: 2);
+                                                  break;
+                                              }
+
+                                              ref
+                                                  .read(fretboardProvider
+                                                      .notifier)
+                                                  .updateFingering(
+                                                      temp, newFingering);
+                                            }),
+                                      IconButton(
+                                          icon: Icon(Icons.delete),
+                                          tooltip: "Delete",
+                                          onPressed: () {
                                             ref
-                                              .read(fretboardProvider.notifier).setBarre(temp, true);
-                                          } else {
-                                             ref
-                                              .read(fretboardProvider.notifier).setBarre(temp, false);
-                                          }                                                       
-                                        }),
-                                    
-                                    if ( f.fingerings[index].fret != null && f.fingerings[index].fret! > 0)
-                                    IconButton(
-                                        icon: Icon(Icons.palette),
-                                        tooltip: "Invert Color",
-                                        onPressed: () {
-                                          
-                                           Fingering temp = f.fingerings[index];
-                                          Fingering newFingering;
-                                
-                                          switch(temp.bgColor){
-                                            case Colors.black:
-                                            case null:
-                                                newFingering = f.fingerings[index].copyWith(bgColor: Colors.white, textColor: Colors.black,borderColor: Colors.black, borderSize: 2);
-                                                break;
-                                              default:
-                                                newFingering = f
-                                                    .fingerings[index]
-                                                    .copyWith(
-                                                        bgColor: Colors.black,
-                                                        textColor: Colors.white,
-                                                        borderColor:
-                                                            Colors.black,
-                                                        borderSize: 2);
-                                                break;
-                                          }
-                                          
-                                          ref
-                                              .read(fretboardProvider.notifier)
-                                             .updateFingering(temp, newFingering);
-                                
-                                
-                                
-                                        }),
-                                    IconButton(
-                                        icon: Icon(Icons.delete),
-                                        tooltip: "Delete",
-                                        onPressed: () {
-                                          ref
-                                              .read(fretboardProvider.notifier)
-                                              .removeFingering(
-                                                  f.fingerings[index]);
-                                        }),
-                                  ],
+                                                .read(
+                                                    fretboardProvider.notifier)
+                                                .removeFingering(
+                                                    f.fingerings[index]);
+                                          }),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              subtitle: f.fingerings[index].text == ""
-                                  ? Text("Text: Blank")
-                                  : Text("Text: ${f.fingerings[index].text}"),
-                              title: Text(
-                                  "String: ${f.fingerings[index].string}, Fret: ${f.fingerings[index].fret}")),
-                        );
-                      },
-                      itemCount: f.fingerings.length,
+                                subtitle: SizedBox(
+                                    width: 100,
+                                    child: SegmentedButton<FingeringShape>(
+                                      segments: <ButtonSegment<FingeringShape>>[
+                                        ButtonSegment<FingeringShape>(
+                                            value: FingeringShape.circle,
+                                            icon: Icon(
+                                              Icons.circle,
+                                              size: 12,
+                                            )),
+                                        ButtonSegment<FingeringShape>(
+                                            value: FingeringShape.square,
+                                            icon: Icon(Icons.square, size: 12)),
+                                        ButtonSegment<FingeringShape>(
+                                            value: FingeringShape.diamond,
+                                            icon:
+                                                Icon(Icons.diamond, size: 12)),
+                                        ButtonSegment<FingeringShape>(
+                                            value: FingeringShape.triangle,
+                                            icon: Icon(
+                                                Icons.change_history_outlined,
+                                                size: 12)),
+                                      ],
+                                      onSelectionChanged: (selection) {
+                                        ref
+                                            .read(fretboardProvider.notifier)
+                                            .updateFingering(
+                                                f.fingerings[index],
+                                                f.fingerings[index].copyWith(
+                                                    shape: selection.first));
+                                      },
+                                      selected: {
+                                        f.fingerings[index].shape ??
+                                            FingeringShape.circle
+                                      },
+                                    )
+                                    // Row(
+                                    //   children: [
+                                    //     RadioListTile<FingeringShape>(
+                                    //         value: FingeringShape.circle,
+                                    //         groupValue: f.fingerings[index].shape,
+                                    //         onChanged: (value) {
+                                    //           ref
+                                    //               .read(fretboardProvider.notifier)
+                                    //               .updateFingering(
+                                    //                   f.fingerings[index],
+                                    //                   f.fingerings[index].copyWith(
+                                    //                       shape: FingeringShape
+                                    //                           .circle));
+                                    //         })
+                                    //   ],
+                                    // ),
+                                    ),
+                                // f.fingerings[index].text == ""
+                                //     ? Text("Text: Blank")
+                                //     : Text("Text: ${f.fingerings[index].text}"),
+                                title: Text(
+                                    "String: ${f.fingerings[index].string}, Fret: ${f.fingerings[index].fret}")),
+                          );
+                        },
+                        itemCount: f.fingerings.length,
+                      ),
                     ),
                   ),
                 ],
@@ -568,7 +643,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _capturePng,
-        tooltip: 'Increment',
+        tooltip: 'Save PNG',
         child: const Icon(Icons.save),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
