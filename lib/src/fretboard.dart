@@ -3,8 +3,7 @@ import 'package:music_notes/music_notes.dart';
 
 class Fretboard {
   Fretboard(
-      {
-      this.name = "",
+      {this.name = "",
       this.extension = "",
       this.strings = 6,
       this.capo = 0,
@@ -109,7 +108,6 @@ class Fretboard {
       tunings: tunings ?? this.tunings,
       fingerings: fingerings ?? this.fingerings,
     );
-    print(ret.frets.toString());
     return ret;
   }
 }

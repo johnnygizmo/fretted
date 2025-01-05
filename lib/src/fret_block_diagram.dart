@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fretted/fretted.dart';
 import 'package:fretted/src/fretboard_painter.dart';
@@ -30,6 +31,7 @@ class FretBlockDiagram extends ConsumerWidget {
       this.spellWith = music.Accidental.sharp,
       this.fontFamily = "packages/fretted/MuseJazzText",
       this.onClick,
+      this.onDblClick,
       this.onLongPress,
       this.updateName});
 
@@ -75,6 +77,7 @@ class FretBlockDiagram extends ConsumerWidget {
   final music.Accidental spellWith;
 
   final Function(int string, int? fret, double distance)? onClick;
+  final Function(int string, int? fret, double distance)? onDblClick;
   final Function(int string, int? fret, double distance)? onLongPress;
   final Function(String name, int? startFret, int? frets, int? strings)?
       updateName;
@@ -90,101 +93,101 @@ class FretBlockDiagram extends ConsumerWidget {
         right: padding.right + sideSpacing);
 
     var frets = this.frets ?? fretboard.frets;
-    var startFret = this.startFret ?? fretboard.startFret;
+    //var startFret = this.startFret ?? fretboard.startFret;
     var drawWidth = (width - fbPadding.left - fbPadding.right);
     var drawHeight = (height - fbPadding.top - fbPadding.bottom);
     var stringSpacing = drawWidth / (fretboard.strings - 1);
     var fretSpacing = drawHeight / frets;
 
-    double shapeRadius = (markerSize ?? stringSpacing * .45) as double;
+    //double shapeRadius = (markerSize ?? stringSpacing * .45) as double;
     return Column(
       children: [
-
-
-
-Text.rich(
-  TextSpan(
-    children: [
-      TextSpan(
-        text: fretboard.name,
-        style: TextStyle(
-          fontSize: headerSize,
-          color: Colors.black,
-          fontFamily: fontFamily,
-        ),
-      ),
-      WidgetSpan(
-        alignment: PlaceholderAlignment.top,
-        child: Transform.translate(
-          offset: Offset(0, -headerSize * 0.9),
-          child: Text(
-            fretboard.extension,
-            style: TextStyle(
-              fontSize: headerSize * 0.6,
-              color: Colors.black,
-              fontFamily: fontFamily,
-            ),
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: fretboard.name,
+                style: TextStyle(
+                  fontSize: headerSize,
+                  color: Colors.black,
+                  fontFamily: fontFamily,
+                ),
+              ),
+              WidgetSpan(
+                alignment: PlaceholderAlignment.top,
+                child: Transform.translate(
+                  offset: Offset(0, -headerSize * 0.9),
+                  child: Text(
+                    fretboard.extension,
+                    style: TextStyle(
+                      fontSize: headerSize * 0.6,
+                      color: Colors.black,
+                      fontFamily: fontFamily,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ),
-    ],
-  ),
-)
-        ,
-          
-          
-          // Text(
-          //   '${fretboard.name}${fretboard.extension}',
-          //   style: TextStyle(
-          //     fontSize: headerSize,
-          //     color: Colors.black,
-          //     fontFamily: fontFamily,
-          //   ),
-          // ),
-        
+
+        // Text(
+        //   '${fretboard.name}${fretboard.extension}',
+        //   style: TextStyle(
+        //     fontSize: headerSize,
+        //     color: Colors.black,
+        //     fontFamily: fontFamily,
+        //   ),
+        // ),
+
         if (fretboard.capo > 0) Text("Capo ${fretboard.capo}"),
         SizedBox(height: 18),
-        Container(
-          //ecoration: BoxDecoration(border: Border.all(color: Colors.black)),
-          child: GestureDetector(
-            onTapDown: (details) {
-              print(details.localPosition.toString());
-              var fbpos1 = (details.localPosition -
-                  Offset(fbPadding.left, fbPadding.top));
+        GestureDetector(
+          onDoubleTapDown: (details) {
+            var fbpos1 =
+                (details.localPosition - Offset(fbPadding.left, fbPadding.top));
+            var fretString = Offset((fbpos1.dx / stringSpacing).roundToDouble(),
+                (fbpos1.dy / fretSpacing).ceilToDouble());
 
-              print(fbpos1.toString());
+            if (onClick != null) {
+              Offset actualPos = Offset(fretString.dx * stringSpacing,
+                  fretString.dy * fretSpacing - fretSpacing / 2);
+              var distance = ((fbpos1 - actualPos).distanceSquared);
+              onDblClick!(fretboard.strings - (fretString.dx as int),
+                  fretString.dy.abs() as int, distance);
+            }
+          },
+          onTapDown: (details) {
+            var fbpos1 =
+                (details.localPosition - Offset(fbPadding.left, fbPadding.top));
+            var fretString = Offset((fbpos1.dx / stringSpacing).roundToDouble(),
+                (fbpos1.dy / fretSpacing).ceilToDouble());
 
-              var fretString = Offset(
-                  (fbpos1.dx / stringSpacing).roundToDouble(),
-                  (fbpos1.dy / fretSpacing).ceilToDouble());
+            if (onClick != null) {
+              Offset actualPos = Offset(fretString.dx * stringSpacing,
+                  fretString.dy * fretSpacing - fretSpacing / 2);
+              var distance = ((fbpos1 - actualPos).distanceSquared);
+              onClick!(fretboard.strings - (fretString.dx as int),
+                  fretString.dy.abs() as int, distance);
+            }
+          },
+          onLongPressStart: (details) {
+            var fbpos =
+                (details.localPosition - Offset(fbPadding.left, fbPadding.top));
+            var fretString = Offset((fbpos.dx / stringSpacing).roundToDouble(),
+                (fbpos.dy / fretSpacing).ceilToDouble());
 
-              if (onClick != null) {
-                Offset actualPos = Offset(fretString.dx * stringSpacing,
-                    fretString.dy * fretSpacing - fretSpacing / 2);
-                var distance = ((fbpos1 - actualPos).distanceSquared);
-                onClick!(fretboard.strings - (fretString.dx as int),
-                    fretString.dy.abs() as int, distance);
-              }
-            },
-            onLongPressStart: (details) {
-              var fbpos = (details.localPosition -
-                  Offset(fbPadding.left, fbPadding.top));
-              var fretString = Offset(
-                  (fbpos.dx / stringSpacing).roundToDouble(),
-                  (fbpos.dy / fretSpacing).ceilToDouble());
-
-              if (onLongPress != null) {
-                Offset actualPos = Offset(fretString.dx * stringSpacing,
-                    fretString.dy * fretSpacing - fretSpacing / 2);
-                var distance = ((fbpos - actualPos).distanceSquared);
-                onLongPress!(fretboard.strings - (fretString.dx as int),
-                    fretString.dy as int, distance);
-              }
-            },
-            child: CustomPaint(
-              size: Size(width.toDouble(), height.toDouble()),
-              painter: FretboardPainter(this),
-            ),
+            if (onLongPress != null) {
+              Offset actualPos = Offset(fretString.dx * stringSpacing,
+                  fretString.dy * fretSpacing - fretSpacing / 2);
+              var distance = ((fbpos - actualPos).distanceSquared);
+              onLongPress!(fretboard.strings - (fretString.dx as int),
+                  fretString.dy as int, distance);
+            }
+          },
+          child: CustomPaint(
+            size: Size(width.toDouble(), height.toDouble()),
+            painter: FretboardPainter(this),
           ),
         ),
       ],
@@ -239,5 +242,7 @@ Text.rich(
 }
 
 void fingeringPrinter(Fingering f) {
-  print("string:${f.string} fret:${f.fret}");
+  if (kDebugMode) {
+    print("string:${f.string} fret:${f.fret}");
+  }
 }

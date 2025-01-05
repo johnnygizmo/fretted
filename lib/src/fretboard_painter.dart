@@ -65,7 +65,10 @@ class FretboardPainter extends CustomPainter {
           Colors.black,
           parent.fontFamily);
     }
-    for (var marker in parent.fretboard.fingerings) {    
+    for (var marker in parent.fretboard.fingerings) {
+      if (marker.fret != null && marker.fret! > frets) {
+        continue;
+      }
 
       var string = parent.fretboard.strings - marker.string;
       var x = fbPadding.left + (stringSpacing * string);
@@ -225,7 +228,7 @@ class FretboardPainter extends CustomPainter {
         var pitch = parent
             .fretboard.tunings[parent.fretboard.strings - marker.string]
             .transposeBy(music.Interval.fromSemitones(
-                marker.fret! + parent.fretboard.capo + (startFret as int) - 1));
+                marker.fret! + parent.fretboard.capo + (startFret) - 1));
 
         String noteOut = "";
         if (parent.spellWith == music.Accidental.flat) {
