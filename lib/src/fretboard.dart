@@ -88,6 +88,20 @@ class Fretboard {
     );
   }
 
+  List<Pitch> getNotes() {
+    // 1. Filter out any Fingering with null fret
+    // 2. Sort by fret in descending order
+    final sortedFingerings = fingerings.where((f) => f.fret != null).toList()
+      ..sort((a, b) => b.string.compareTo(a.string));
+
+    // Then map to Pitch objects
+    return sortedFingerings.map((f) {
+      return tunings[strings - f.string].transposeBy(
+        Interval.fromSemitones(f.fret! + capo + (startFret - 1)),
+      );
+    }).toList();
+  }
+
   Fretboard copyWith({
     String? name,
     String? extension,

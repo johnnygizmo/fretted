@@ -143,20 +143,6 @@ class FretBlockDiagram extends ConsumerWidget {
         if (fretboard.capo > 0) Text("Capo ${fretboard.capo}"),
         SizedBox(height: 18),
         GestureDetector(
-          onDoubleTapDown: (details) {
-            var fbpos1 =
-                (details.localPosition - Offset(fbPadding.left, fbPadding.top));
-            var fretString = Offset((fbpos1.dx / stringSpacing).roundToDouble(),
-                (fbpos1.dy / fretSpacing).ceilToDouble());
-
-            if (onClick != null) {
-              Offset actualPos = Offset(fretString.dx * stringSpacing,
-                  fretString.dy * fretSpacing - fretSpacing / 2);
-              var distance = ((fbpos1 - actualPos).distanceSquared);
-              onDblClick!(fretboard.strings - (fretString.dx as int),
-                  fretString.dy.abs() as int, distance);
-            }
-          },
           onTapDown: (details) {
             var fbpos1 =
                 (details.localPosition - Offset(fbPadding.left, fbPadding.top));

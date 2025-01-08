@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -10,10 +11,15 @@ import 'dart:html' as html;
 
 import 'package:music_notes/music_notes.dart' as music;
 import 'package:flutter_spinbox/material.dart';
+import 'package:simple_sheet_music/simple_sheet_music.dart' as sheet;
 
 void main() {
   runApp(ProviderScope(child: const MyApp()));
 }
+
+final sizeProvider = StateProvider<Size>(
+  (ref) => Size(300, 300),
+);
 
 final showPitchProvider = StateProvider<bool>((ref) {
   return false;
@@ -25,6 +31,10 @@ final spellWithProvider = StateProvider<music.Accidental>((ref) {
 
 final fretsProvider = StateProvider<int>((ref) {
   return 4;
+});
+
+final headerSizeProvider = StateProvider<double>((ref) {
+  return 40;
 });
 
 GlobalKey _globalKey = GlobalKey();
@@ -79,19 +89,88 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   Widget build(BuildContext context) {
     ref.watch(showPitchProvider);
     ref.watch(spellWithProvider);
-
+    ref.watch(sizeProvider);
+    ref.watch(headerSizeProvider);
     var f = ref.watch(fretboardProvider);
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
-        actions: [],
+        actions: [
+          IconButton(
+              onPressed: () {
+                print(jsonEncode(ref.read(fretboardProvider).toJson()));
+              },
+              icon: Icon(Icons.download)),
+          IconButton(
+              onPressed: () {
+                String s = _extController.text;
+
+                var f =
+                    Fretboard.fromJson(jsonDecode(s) as Map<String, dynamic>);
+                ref.read(fretboardProvider.notifier).updateFretboard(f);
+
+                _extController.text = "";
+              },
+              icon: Icon(Icons.upload))
+        ],
       ),
       body: SingleChildScrollView(
         child: Center(
           child: Column(
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("Size - Height:"),
+                  SizedBox(
+                    height: 45,
+                    width: 150,
+                    child: SpinBox(
+                      min: 100,
+                      max: 1000,
+                      value: ref.read(sizeProvider).height,
+                      onChanged: (value) {
+                        ref.read(sizeProvider.notifier).state =
+                            Size(ref.read(sizeProvider).width, value);
+                      },
+                    ),
+                  ),
+                  Text(" Width: "),
+                  SizedBox(
+                    height: 45,
+                    width: 150,
+                    child: SpinBox(
+                      min: 100,
+                      max: 1000,
+                      value: ref.read(sizeProvider).width,
+                      onChanged: (value) {
+                        ref.read(sizeProvider.notifier).state = Size(
+                          value,
+                          ref.read(sizeProvider).height,
+                        );
+                      },
+                    ),
+                  ),
+                  Text(" Header Size: "),
+                  SizedBox(
+                    height: 45,
+                    width: 150,
+                    child: SpinBox(
+                      min: 1,
+                      max: 1000,
+                      value: ref.read(headerSizeProvider),
+                      onChanged: (value) {
+                        ref.read(headerSizeProvider.notifier).state = value;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 15,
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -203,29 +282,145 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                       },
                     ),
                   ),
-                  SizedBox(
-                    width: 50,
-                  ),
-                  Text("Extension: "),
-                  SizedBox(
-                    width: 200,
-                    child: TextField(
-                      controller: _extController,
-                      focusNode: _focusNode,
-                      onChanged: (value) {
-                        var fb = ref.read(fretboardProvider);
+                  Row(
+                    children: [
+                      ElevatedButton(
+                          onPressed: () {
+                            var f = ref.read(fretboardProvider);
+                            ref
+                                .read(fretboardProvider.notifier)
+                                .updateFretboard(
+                                    f.copyWith(name: f.name + "♭"));
+                            _controller.text = _controller.text + "♭";
+                          },
+                          child: Text("♭")),
+                      ElevatedButton(
+                          onPressed: () {
+                            var f = ref.read(fretboardProvider);
+                            ref
+                                .read(fretboardProvider.notifier)
+                                .updateFretboard(
+                                    f.copyWith(name: f.name + "♯"));
+                            _controller.text = _controller.text + "♯";
+                          },
+                          child: Text("♯")),
+                      ElevatedButton(
+                          onPressed: () {
+                            var f = ref.read(fretboardProvider);
+                            ref
+                                .read(fretboardProvider.notifier)
+                                .updateFretboard(
+                                    f.copyWith(name: f.name + "♮"));
+                            _controller.text = _controller.text + "♮";
+                          },
+                          child: Text("♮"))
+                    ],
+                  )
+                  // SizedBox(
+                  //   width: 50,
+                  // ),
+                  // Text("Extension: "),
+                  // SizedBox(
+                  //   width: 200,
+                  //   child: TextField(
+                  //     controller: _extController,
+                  //     focusNode: _focusNode,
+                  //     onChanged: (value) {
+                  //       var fb = ref.read(fretboardProvider);
 
-                        ref
-                            .read(fretboardProvider.notifier)
-                            .updateFretboard(fb.copyWith(extension: value));
-                      },
-                    ),
-                  ),
+                  //       ref
+                  //           .read(fretboardProvider.notifier)
+                  //           .updateFretboard(fb.copyWith(extension: value));
+                  //     },
+                  //   ),
+                  //),
                 ],
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
+                  // Builder(builder: (context) {
+                  //   var notes = <sheet.ChordNotePart>[];
+                  //   var fretboard = ref.read(fretboardProvider);
+
+                  //   for (int i = 0; i < fretboard.strings; i++) {
+                  //     var open = fretboard.tunings[i].transposeBy(
+                  //         music.Interval.fromSemitones(
+                  //             fretboard.capo + (fretboard.startFret - 1)));
+
+                  //     print(open.toString());
+                  //     var fing = fretboard.fingerings.where((f) {
+                  //       return f.string == fretboard.strings - i;
+                  //     });
+
+                  //     for (var f in fing) {
+                  //       if (f.fret == null) {
+                  //         continue;
+                  //       }
+
+                  //       var p = open
+                  //           .transposeBy(music.Interval.fromSemitones(f.fret!));
+
+                  //       sheet.Accidental? accidental;
+                  //       if (p.note.accidental == music.Accidental.flat) {
+                  //         accidental = sheet.Accidental.flat;
+                  //       } else if (p.note.accidental ==
+                  //           music.Accidental.sharp) {
+                  //         accidental = sheet.Accidental.sharp;
+                  //       } else if (p.note.accidental ==
+                  //           music.Accidental.doubleFlat) {
+                  //         accidental = sheet.Accidental.doubleFlat;
+                  //       } else if (p.note.accidental ==
+                  //           music.Accidental.doubleSharp) {
+                  //         accidental = sheet.Accidental.doubleSharp;
+                  //       }
+
+                  //       print(noteToPitch(p));
+
+                  //       if (ref.read(spellWithProvider) ==
+                  //           music.Accidental.sharp) {
+                  //         if (p.note.accidental == music.Accidental.flat) {
+                  //           sheet.ChordNotePart cnp = sheet.ChordNotePart(
+                  //               sheet.Pitch.a0.upN(noteToPitch(p) - 1),
+                  //               accidental: sheet.Accidental.sharp);
+                  //           notes.add(cnp);
+                  //         } else {
+                  //           sheet.ChordNotePart cnp = sheet.ChordNotePart(
+                  //               sheet.Pitch.a0.upN(noteToPitch(p)),
+                  //               accidental: accidental);
+
+                  //           notes.add(cnp);
+                  //         }
+                  //       } else {
+                  //         if (p.note.accidental == music.Accidental.sharp) {
+                  //           sheet.ChordNotePart cnp = sheet.ChordNotePart(
+                  //               sheet.Pitch.a0.upN(noteToPitch(p) + 1),
+                  //               accidental: sheet.Accidental.flat);
+                  //           notes.add(cnp);
+                  //         } else {
+                  //           sheet.ChordNotePart cnp = sheet.ChordNotePart(
+                  //               sheet.Pitch.a0.upN(noteToPitch(p)),
+                  //               accidental: accidental);
+
+                  //           notes.add(cnp);
+                  //         }
+                  //       }
+                  //     }
+                  //   }
+
+                  //   return sheet.SimpleSheetMusic(
+                  //     width: 150,
+                  //     height: 400,
+                  //     measures: [
+                  //       sheet.Measure([
+                  //         const sheet.KeySignature(
+                  //             sheet.KeySignatureType.cMajor),
+                  //         const sheet.Clef(sheet.ClefType.treble),
+                  //         if (f.fingerings.isNotEmpty) sheet.ChordNote(notes),
+                  //       ])
+                  //     ],
+                  //   );
+                  // }),
                   RepaintBoundary(
                     key: _globalKey,
                     child: Container(
@@ -235,9 +430,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                         // var fbd = ref.watch(fretBlockDiagramProvider(f));
                         // return fbd;
                         return FretBlockDiagram(
-                          headerSize: 40,
-                          width: 300,
-                          height: 300,
+                          headerSize: ref.read(headerSizeProvider).toDouble(),
+                          width: ref.read(sizeProvider).width.toInt(),
+                          height: ref.read(sizeProvider).height.toInt(),
                           fretboard: f,
                           name: "C Major",
                           spellWith: ref.read(spellWithProvider),
@@ -317,184 +512,30 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                           border: Border.all(),
                           borderRadius: BorderRadius.all(Radius.circular(10))),
                       child: SizedBox(
-                        width: 500,
+                        width: 550,
                         height: 500,
-                        child: ListView.builder(
-                          clipBehavior: Clip.antiAlias,
-                          padding: EdgeInsets.all(5),
-                          itemBuilder: (context, index) {
-                            TextEditingController tempController =
-                                TextEditingController(
-                                    text: f.fingerings[index].text);
-                            return Card(
-                              key: ValueKey((
-                                f.fingerings[index].string,
-                                f.fingerings[index].fret
-                              )),
-                              child: ListTile(
-                                  trailing: SizedBox(
-                                    width: 125,
-                                    child: Row(
-                                      children: [
-                                        if (f.fingerings[index].fret != null &&
-                                            f.fingerings[index].fret! > 0)
-                                          IconButton(
-                                              icon: Icon(Icons.bar_chart),
-                                              tooltip: "Barre",
-                                              onPressed: () {
-                                                Fingering temp =
-                                                    f.fingerings[index];
-                                                if (temp.barre == null) {
-                                                  ref
-                                                      .read(fretboardProvider
-                                                          .notifier)
-                                                      .setBarre(temp, true);
-                                                } else {
-                                                  ref
-                                                      .read(fretboardProvider
-                                                          .notifier)
-                                                      .setBarre(temp, false);
-                                                }
-                                              }),
-                                        if (f.fingerings[index].fret != null &&
-                                            f.fingerings[index].fret! > 0)
-                                          IconButton(
-                                              icon: Icon(Icons.palette),
-                                              tooltip: "Invert Color",
-                                              onPressed: () {
-                                                Fingering temp =
-                                                    f.fingerings[index];
-                                                Fingering newFingering;
-
-                                                switch (temp.bgColor) {
-                                                  case Colors.black:
-                                                  case null:
-                                                    newFingering = f
-                                                        .fingerings[index]
-                                                        .copyWith(
-                                                            bgColor:
-                                                                Colors.white,
-                                                            textColor:
-                                                                Colors.black,
-                                                            borderColor:
-                                                                Colors.black,
-                                                            borderSize: 2);
-                                                    break;
-                                                  default:
-                                                    newFingering = f
-                                                        .fingerings[index]
-                                                        .copyWith(
-                                                            bgColor:
-                                                                Colors.black,
-                                                            textColor:
-                                                                Colors.white,
-                                                            borderColor:
-                                                                Colors.black,
-                                                            borderSize: 2);
-                                                    break;
-                                                }
-
-                                                ref
-                                                    .read(fretboardProvider
-                                                        .notifier)
-                                                    .updateFingering(
-                                                        temp, newFingering);
-                                              }),
-                                        IconButton(
-                                            icon: Icon(Icons.delete),
-                                            tooltip: "Delete",
-                                            onPressed: () {
-                                              ref
-                                                  .read(fretboardProvider
-                                                      .notifier)
-                                                  .removeFingering(
-                                                      f.fingerings[index]);
-                                            }),
-                                      ],
-                                    ),
-                                  ),
-                                  subtitle: SizedBox(
-                                      width: 100,
-                                      child: SegmentedButton<FingeringShape>(
-                                        segments: <ButtonSegment<
-                                            FingeringShape>>[
-                                          ButtonSegment<FingeringShape>(
-                                              value: FingeringShape.circle,
-                                              icon: Icon(
-                                                Icons.circle,
-                                                size: 12,
-                                              )),
-                                          ButtonSegment<FingeringShape>(
-                                              value: FingeringShape.square,
-                                              icon:
-                                                  Icon(Icons.square, size: 12)),
-                                          ButtonSegment<FingeringShape>(
-                                              value: FingeringShape.diamond,
-                                              icon: Icon(Icons.diamond,
-                                                  size: 12)),
-                                          ButtonSegment<FingeringShape>(
-                                              value: FingeringShape.triangle,
-                                              icon: Icon(
-                                                  Icons.change_history_outlined,
-                                                  size: 12)),
-                                        ],
-                                        onSelectionChanged: (selection) {
-                                          ref
-                                              .read(fretboardProvider.notifier)
-                                              .updateFingering(
-                                                  f.fingerings[index],
-                                                  f.fingerings[index].copyWith(
-                                                      shape: selection.first));
-                                        },
-                                        selected: {
-                                          f.fingerings[index].shape ??
-                                              FingeringShape.circle
-                                        },
-                                      )),
-                                  title: Row(
-                                    children: [
-                                      Text(
-                                        "String: ${f.fingerings[index].string}, Fret: ${f.fingerings[index].fret}, Text:",
-                                        style: TextStyle(fontSize: 24),
-                                      ),
-                                      SizedBox(
-                                          width: 55,
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.all(
-                                                    Radius.circular(7)),
-                                                border: Border.all()),
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(4.0),
-                                              child: TextField(
-                                                textAlign: TextAlign.center,
-                                                style: TextStyle(fontSize: 20),
-                                                controller: tempController,
-                                                onChanged: (value) {
-                                                  ref
-                                                      .read(fretboardProvider
-                                                          .notifier)
-                                                      .updateFingering(
-                                                          f.fingerings[index],
-                                                          f.fingerings[index]
-                                                              .copyWith(
-                                                                  text: value));
-                                                },
-                                              ),
-                                            ),
-                                          ))
-                                    ],
-                                  )),
-                            );
-                          },
-                          itemCount: f.fingerings.length,
-                        ),
+                        child: buildControlList(f),
                       ),
                     ),
                   ),
                 ],
               ),
+              // Text(f.getNotes().toString()),
+              // Builder(
+              //   builder: (context) {
+              //     var notes = f.getNotes().map((e) => e.note).toList();
+              //     var results = possibleChords(notes);
+
+              //     if (results.isEmpty) {
+              //       return Container();
+              //     }
+
+              //     return Column(
+              //       children: results.map((e) => Text(e)).toList() ?? [],
+              //     );
+              //     return Container();
+              //   },
+              // )
             ],
           ),
         ),
@@ -504,6 +545,191 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         tooltip: 'Save PNG',
         child: const Icon(Icons.save),
       ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  ListView buildControlList(Fretboard f) {
+    return ListView.builder(
+      clipBehavior: Clip.antiAlias,
+      padding: EdgeInsets.all(5),
+      itemBuilder: (context, index) {
+        TextEditingController tempController =
+            TextEditingController(text: f.fingerings[index].text);
+        return Card(
+          key: ValueKey((f.fingerings[index].string, f.fingerings[index].fret)),
+          child: ListTile(
+              trailing: SizedBox(
+                width: 125,
+                child: Row(
+                  children: [
+                    if (f.fingerings[index].fret == null)
+                      IconButton(
+                        onPressed: () {
+                          Fingering temp = f.fingerings[index];
+                          ref
+                              .read(fretboardProvider.notifier)
+                              .updateFingering(temp, temp.copyWith(fret: 0));
+                        },
+                        icon: Icon(Icons.circle),
+                        tooltip: "Change to Open",
+                      )
+                    else if (f.fingerings[index].fret == 0)
+                      IconButton(
+                        onPressed: () {
+                          Fingering temp = f.fingerings[index];
+                          ref
+                              .read(fretboardProvider.notifier)
+                              .updateFingering(temp, temp.copyWith(fret: -1));
+                        },
+                        icon: Icon(Icons.close),
+                        tooltip: "Change to Muted/Unplayed",
+                      ),
+                    if (f.fingerings[index].fret != null &&
+                        f.fingerings[index].fret! > 0)
+                      IconButton(
+                          icon: Icon(Icons.bar_chart),
+                          tooltip: "Barre",
+                          onPressed: () {
+                            Fingering temp = f.fingerings[index];
+                            if (temp.barre == null) {
+                              ref
+                                  .read(fretboardProvider.notifier)
+                                  .setBarre(temp, true);
+                            } else {
+                              ref
+                                  .read(fretboardProvider.notifier)
+                                  .setBarre(temp, false);
+                            }
+                          }),
+                    if (f.fingerings[index].fret != null &&
+                        f.fingerings[index].fret! > 0)
+                      IconButton(
+                          icon: Icon(Icons.palette),
+                          tooltip: "Invert Color",
+                          onPressed: () {
+                            Fingering temp = f.fingerings[index];
+                            Fingering newFingering;
+
+                            switch (temp.bgColor) {
+                              case Colors.black:
+                              case null:
+                                newFingering = f.fingerings[index].copyWith(
+                                    bgColor: Colors.white,
+                                    textColor: Colors.black,
+                                    borderColor: Colors.black,
+                                    borderSize: 2);
+                                break;
+                              default:
+                                newFingering = f.fingerings[index].copyWith(
+                                    bgColor: Colors.black,
+                                    textColor: Colors.white,
+                                    borderColor: Colors.black,
+                                    borderSize: 2);
+                                break;
+                            }
+
+                            ref
+                                .read(fretboardProvider.notifier)
+                                .updateFingering(temp, newFingering);
+                          }),
+                    IconButton(
+                        icon: Icon(Icons.delete),
+                        tooltip: "Delete",
+                        onPressed: () {
+                          ref
+                              .read(fretboardProvider.notifier)
+                              .removeFingering(f.fingerings[index]);
+                        }),
+                  ],
+                ),
+              ),
+              subtitle: f.fingerings[index].fret != null &&
+                      f.fingerings[index].fret! > 0
+                  ? SizedBox(
+                      width: 100,
+                      child: SegmentedButton<FingeringShape>(
+                        segments: <ButtonSegment<FingeringShape>>[
+                          ButtonSegment<FingeringShape>(
+                              value: FingeringShape.circle,
+                              icon: Icon(
+                                Icons.circle,
+                                size: 12,
+                              )),
+                          ButtonSegment<FingeringShape>(
+                              value: FingeringShape.square,
+                              icon: Icon(Icons.square, size: 12)),
+                          ButtonSegment<FingeringShape>(
+                              value: FingeringShape.diamond,
+                              icon: Icon(Icons.diamond, size: 12)),
+                          ButtonSegment<FingeringShape>(
+                              value: FingeringShape.triangle,
+                              icon: Icon(Icons.change_history_outlined,
+                                  size: 12)),
+                        ],
+                        onSelectionChanged: (selection) {
+                          ref.read(fretboardProvider.notifier).updateFingering(
+                              f.fingerings[index],
+                              f.fingerings[index]
+                                  .copyWith(shape: selection.first));
+                        },
+                        selected: {
+                          f.fingerings[index].shape ?? FingeringShape.circle
+                        },
+                      ))
+                  : null,
+              title: Row(
+                children: [
+                  Text("String: ${f.fingerings[index].string}, Fret: ",
+                      style: TextStyle(fontSize: 24)),
+                  if (f.fingerings[index].fret == null)
+                    Text("Muted", style: TextStyle(fontSize: 24))
+                  else if (f.fingerings[index].fret == 0)
+                    Text("Open", style: TextStyle(fontSize: 24))
+                  else
+                    Text(
+                      "${f.fingerings[index].fret}",
+                      style: TextStyle(fontSize: 24),
+                    ),
+                  if (f.fingerings[index].fret != null &&
+                      f.fingerings[index].fret! > 0)
+                    Text(
+                      ", Text: ",
+                      style: TextStyle(fontSize: 24),
+                    ),
+                  if (f.fingerings[index].fret != null &&
+                      f.fingerings[index].fret! > 0)
+                    SizedBox(
+                        width: 55,
+                        child: Container(
+                          decoration: BoxDecoration(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(7)),
+                              border: Border.all()),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: TextField(
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 20),
+                              controller: tempController,
+                              onChanged: (value) {
+                                ref
+                                    .read(fretboardProvider.notifier)
+                                    .updateFingering(
+                                        f.fingerings[index],
+                                        f.fingerings[index].copyWith(
+                                            text: tempController.text
+                                                .split('')
+                                                .reversed
+                                                .join('')));
+                              },
+                            ),
+                          ),
+                        ))
+                ],
+              )),
+        );
+      },
+      itemCount: f.fingerings.length,
     );
   }
 
@@ -523,4 +749,94 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       html.Url.revokeObjectUrl(url);
     } catch (e) {}
   }
+}
+
+List<String> possibleChords(List<music.Note> notes) {
+  if (notes.length < 3) {
+    return [];
+  }
+  var permResults = permutations(notes).map((p) => music.Chord(p)).toList();
+
+  final seen = <String>[];
+  final uniqueChords = <music.Chord>[];
+
+  for (final chord in permResults) {
+    if (chord.pattern.abbreviation == '?') {
+      continue;
+    }
+    final chordname = '${chord.root}-${chord.pattern.abbreviation}';
+
+    String slash = "";
+    if (chord.root != notes.first) slash = ' / ${notes.first}';
+
+    List<String> extensions = [];
+    for (var note in chord.items) {
+      music.Interval i = music.Interval.fromSemitones(
+          chord.root.difference(note) < 0
+              ? chord.root.difference(note) + 12
+              : chord.root.difference(note));
+
+      if (chord.pattern.rootTriad.intervals.contains(i) || chord.root == note) {
+        continue;
+      }
+
+      if (!extensions.contains(i.toString())) {
+        extensions.add(i.toString());
+      }
+    }
+
+    final signature = "$chordname" + extensions.join("") + slash;
+
+    if (!seen.contains(signature)) {
+      seen.add(signature);
+    }
+  }
+
+  return seen;
+}
+
+List<List<T>> permutations<T>(List<T> list) {
+  if (list.length <= 1) return [list];
+  final result = <List<T>>[];
+  for (int i = 0; i < list.length; i++) {
+    final element = list[i];
+    final remaining = [...list]..removeAt(i);
+    for (final perm in permutations(remaining)) {
+      result.add([element, ...perm]);
+    }
+  }
+  return result;
+}
+
+int noteToPitch(music.Pitch n) {
+  int letterNum = 0;
+  print("Octave: ${n.octave}");
+  print("Note: ${n.note.baseNote.name}");
+  switch (n.note.baseNote.name) {
+    case "a":
+      letterNum = 0;
+      break;
+    case "b":
+      letterNum = 1;
+      break;
+    case "c":
+      letterNum = 2;
+      break;
+    case "d":
+      letterNum = 3;
+      break;
+    case "e":
+      letterNum = 4;
+      break;
+    case "f":
+      letterNum = 5;
+      break;
+    case "g":
+      letterNum = 6;
+      break;
+    default:
+      break;
+  }
+
+  return (letterNum < 2 ? (n.octave + 1) : n.octave) * 7 + letterNum;
 }
