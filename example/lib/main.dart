@@ -1,17 +1,15 @@
 import 'dart:convert';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import 'package:example/fretboard_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+//import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fretted/fretted.dart';
-import 'dart:html' as html;
 
 import 'package:music_notes/music_notes.dart' as music;
 import 'package:flutter_spinbox/material.dart';
-import 'package:simple_sheet_music/simple_sheet_music.dart' as sheet;
+import 'package:web_image_downloader/web_image_downloader.dart';
 
 void main() {
   runApp(ProviderScope(child: const MyApp()));
@@ -100,7 +98,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         actions: [
           IconButton(
               onPressed: () {
-                print(jsonEncode(ref.read(fretboardProvider).toJson()));
+                //print(jsonEncode(ref.read(fretboardProvider).toJson()));
               },
               icon: Icon(Icons.download)),
           IconButton(
@@ -290,8 +288,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                             ref
                                 .read(fretboardProvider.notifier)
                                 .updateFretboard(
-                                    f.copyWith(name: f.name + "♭"));
-                            _controller.text = _controller.text + "♭";
+                                    f.copyWith(name: "${f.name}♭"));
+                            _controller.text = "${_controller.text}♭";
                           },
                           child: Text("♭")),
                       ElevatedButton(
@@ -300,8 +298,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                             ref
                                 .read(fretboardProvider.notifier)
                                 .updateFretboard(
-                                    f.copyWith(name: f.name + "♯"));
-                            _controller.text = _controller.text + "♯";
+                                    f.copyWith(name: "${f.name}♯"));
+                            _controller.text = "${_controller.text}♯";
                           },
                           child: Text("♯")),
                       ElevatedButton(
@@ -310,8 +308,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                             ref
                                 .read(fretboardProvider.notifier)
                                 .updateFretboard(
-                                    f.copyWith(name: f.name + "♮"));
-                            _controller.text = _controller.text + "♮";
+                                    f.copyWith(name: "${f.name}♮"));
+                            _controller.text = "${_controller.text}♮";
                           },
                           child: Text("♮"))
                     ],
@@ -735,19 +733,32 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
 
   Future<void> _capturePng() async {
     try {
-      RenderRepaintBoundary? boundary = _globalKey.currentContext!
-          .findRenderObject() as RenderRepaintBoundary?;
+      await WebImageDownloader.downloadImage(_globalKey,
+          "${ref.read(fretboardProvider).name == "" ? "ChordBlock" : ref.read(fretboardProvider).name}.png");
+      return;
 
-      ui.Image image = await boundary!.toImage(pixelRatio: 2);
+      // RenderRepaintBoundary? boundary = _globalKey.currentContext!
+      //     .findRenderObject() as RenderRepaintBoundary?;
 
-      ByteData? byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
+      // ui.Image image = await boundary!.toImage(pixelRatio: 1);
 
-      Uint8List pngBytes = byteData!.buffer.asUint8List();
-      final blob = html.Blob([pngBytes]);
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      html.Url.revokeObjectUrl(url);
-    } catch (e) {}
+      // ByteData? byteData =
+      //     await image.toByteData(format: ui.ImageByteFormat.png);
+
+      // Uint8List pngBytes = byteData!.buffer.asUint8List();
+      // //   final blob = html.Blob([pngBytes]);
+      // //   final url = html.Url.createObjectUrlFromBlob(blob);
+      // //   html.Url.revokeObjectUrl(url);
+      // Share.shareXFiles([
+      //   XFile.fromData(pngBytes,
+      //       mimeType: "image/png",
+      //       name: ref.read(fretboardProvider).name + ".png")
+      // ]);
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+    }
   }
 }
 
@@ -758,7 +769,7 @@ List<String> possibleChords(List<music.Note> notes) {
   var permResults = permutations(notes).map((p) => music.Chord(p)).toList();
 
   final seen = <String>[];
-  final uniqueChords = <music.Chord>[];
+  //final uniqueChords = <music.Chord>[];
 
   for (final chord in permResults) {
     if (chord.pattern.abbreviation == '?') {
@@ -785,7 +796,7 @@ List<String> possibleChords(List<music.Note> notes) {
       }
     }
 
-    final signature = "$chordname" + extensions.join("") + slash;
+    final signature = "$chordname${extensions.join("")}$slash";
 
     if (!seen.contains(signature)) {
       seen.add(signature);
@@ -810,8 +821,12 @@ List<List<T>> permutations<T>(List<T> list) {
 
 int noteToPitch(music.Pitch n) {
   int letterNum = 0;
-  print("Octave: ${n.octave}");
-  print("Note: ${n.note.baseNote.name}");
+  if (kDebugMode) {
+    print("Octave: ${n.octave}");
+  }
+  if (kDebugMode) {
+    print("Note: ${n.note.baseNote.name}");
+  }
   switch (n.note.baseNote.name) {
     case "a":
       letterNum = 0;
