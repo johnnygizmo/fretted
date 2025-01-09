@@ -44,6 +44,7 @@ dependencies:
   simple_sheet_music: ^1.0.1
   share_plus: ^10.1.3
   web_image_downloader: ^1.0.1
+  flutter_styled_toast: ^2.2.1
 
 dev_dependencies:
   flutter_test:

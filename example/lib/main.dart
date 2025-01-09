@@ -1,15 +1,19 @@
+import 'dart:async';
 import 'dart:convert';
-
+import 'package:example/control_drawer.dart';
 import 'package:example/fretboard_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 //import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:fretted/fretted.dart';
-
 import 'package:music_notes/music_notes.dart' as music;
 import 'package:flutter_spinbox/material.dart';
 import 'package:web_image_downloader/web_image_downloader.dart';
+import 'dart:convert' show base64Encode, utf8;
+import 'package:web/web.dart' as web;
+import 'dart:html' as html;
 
 void main() {
   runApp(ProviderScope(child: const MyApp()));
@@ -44,6 +48,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Fretboard Maker',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -91,177 +96,52 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     ref.watch(headerSizeProvider);
     var f = ref.watch(fretboardProvider);
 
+    //_controller.text = f.name;
     return Scaffold(
-      appBar: AppBar(
+      drawer: ControlDrawer(ref: ref),
+         appBar: AppBar(
+          leading: Builder(
+            builder: (context) => IconButton(
+              tooltip: "Settings",
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+            ),
+          ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
         actions: [
           IconButton(
-              onPressed: () {
-                //print(jsonEncode(ref.read(fretboardProvider).toJson()));
-              },
-              icon: Icon(Icons.download)),
+            tooltip: "Save Image",
+            onPressed: _capturePng, icon: Icon(Icons.image)),
           IconButton(
+           
+            tooltip: "Save Block Definition",
               onPressed: () {
-                String s = _extController.text;
-
-                var f =
-                    Fretboard.fromJson(jsonDecode(s) as Map<String, dynamic>);
-                ref.read(fretboardProvider.notifier).updateFretboard(f);
-
-                _extController.text = "";
+                saveTextFile(jsonEncode(ref.read(fretboardProvider).toJson()),
+                    "${ref.read(fretboardProvider).name}.json");
               },
-              icon: Icon(Icons.upload))
+              icon: Icon(Icons.save)),
+          IconButton(
+             tooltip: "Load Block Definition",
+              onPressed: () async {
+                try {
+                  String fileContent = await uploadTextFile();
+                  var f = Fretboard.fromJson(jsonDecode(fileContent));
+                  ref.read(fretboardProvider.notifier).updateFretboard(f);
+                  _controller.text = f.name;
+                } catch (e) {
+                  showToast("Error reading file",context:context);                 
+                }
+              },
+              icon: Icon(Icons.folder_open)),
         ],
       ),
       body: SingleChildScrollView(
         child: Center(
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text("Size - Height:"),
-                  SizedBox(
-                    height: 45,
-                    width: 150,
-                    child: SpinBox(
-                      min: 100,
-                      max: 1000,
-                      value: ref.read(sizeProvider).height,
-                      onChanged: (value) {
-                        ref.read(sizeProvider.notifier).state =
-                            Size(ref.read(sizeProvider).width, value);
-                      },
-                    ),
-                  ),
-                  Text(" Width: "),
-                  SizedBox(
-                    height: 45,
-                    width: 150,
-                    child: SpinBox(
-                      min: 100,
-                      max: 1000,
-                      value: ref.read(sizeProvider).width,
-                      onChanged: (value) {
-                        ref.read(sizeProvider.notifier).state = Size(
-                          value,
-                          ref.read(sizeProvider).height,
-                        );
-                      },
-                    ),
-                  ),
-                  Text(" Header Size: "),
-                  SizedBox(
-                    height: 45,
-                    width: 150,
-                    child: SpinBox(
-                      min: 1,
-                      max: 1000,
-                      value: ref.read(headerSizeProvider),
-                      onChanged: (value) {
-                        ref.read(headerSizeProvider.notifier).state = value;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(
-                height: 15,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 300,
-                    child: Row(
-                      children: [
-                        Text("Frets: "),
-                        SizedBox(
-                          width: 150,
-                          child: SpinBox(
-                              min: 1,
-                              max: 24,
-                              value:
-                                  ref.read(fretboardProvider).frets.toDouble(),
-                              onChanged: (value) => ref
-                                  .read(fretboardProvider.notifier)
-                                  .setFrets(value.toInt())),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    width: 300,
-                    child: Row(
-                      children: [
-                        Text("Capo At: "),
-                        SizedBox(
-                          width: 150,
-                          child: SpinBox(
-                              min: 0,
-                              max: 24,
-                              value:
-                                  ref.read(fretboardProvider).capo.toDouble(),
-                              onChanged: (value) => ref
-                                  .read(fretboardProvider.notifier)
-                                  .setCapo(value.toInt())),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    width: 300,
-                    child: Row(
-                      children: [
-                        Text("Starting Fret: "),
-                        SizedBox(
-                          width: 150,
-                          child: SpinBox(
-                              min: 1,
-                              max: 24,
-                              value: ref
-                                  .read(fretboardProvider)
-                                  .startFret
-                                  .toDouble(),
-                              onChanged: (value) => ref
-                                  .read(fretboardProvider.notifier)
-                                  .setStartAt(value.toInt())),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text("Show Dots"),
-                  Switch(
-                      value: ref.read(showPitchProvider),
-                      onChanged: (value) {
-                        ref.read(showPitchProvider.notifier).state = value;
-                      }),
-                  Text("Show Pitch"),
-                  SizedBox(
-                    width: 35,
-                  ),
-                  Text("Spell with Flats"),
-                  Switch(
-                      value:
-                          ref.read(spellWithProvider) == music.Accidental.sharp,
-                      onChanged: (value) {
-                        if (value) {
-                          ref.read(spellWithProvider.notifier).state =
-                              music.Accidental.sharp;
-                        } else {
-                          ref.read(spellWithProvider.notifier).state =
-                              music.Accidental.flat;
-                        }
-                      }),
-                  Text("Spell with Sharps"),
-                ],
-              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -314,111 +194,11 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                           child: Text("♮"))
                     ],
                   )
-                  // SizedBox(
-                  //   width: 50,
-                  // ),
-                  // Text("Extension: "),
-                  // SizedBox(
-                  //   width: 200,
-                  //   child: TextField(
-                  //     controller: _extController,
-                  //     focusNode: _focusNode,
-                  //     onChanged: (value) {
-                  //       var fb = ref.read(fretboardProvider);
-
-                  //       ref
-                  //           .read(fretboardProvider.notifier)
-                  //           .updateFretboard(fb.copyWith(extension: value));
-                  //     },
-                  //   ),
-                  //),
                 ],
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  // Builder(builder: (context) {
-                  //   var notes = <sheet.ChordNotePart>[];
-                  //   var fretboard = ref.read(fretboardProvider);
-
-                  //   for (int i = 0; i < fretboard.strings; i++) {
-                  //     var open = fretboard.tunings[i].transposeBy(
-                  //         music.Interval.fromSemitones(
-                  //             fretboard.capo + (fretboard.startFret - 1)));
-
-                  //     print(open.toString());
-                  //     var fing = fretboard.fingerings.where((f) {
-                  //       return f.string == fretboard.strings - i;
-                  //     });
-
-                  //     for (var f in fing) {
-                  //       if (f.fret == null) {
-                  //         continue;
-                  //       }
-
-                  //       var p = open
-                  //           .transposeBy(music.Interval.fromSemitones(f.fret!));
-
-                  //       sheet.Accidental? accidental;
-                  //       if (p.note.accidental == music.Accidental.flat) {
-                  //         accidental = sheet.Accidental.flat;
-                  //       } else if (p.note.accidental ==
-                  //           music.Accidental.sharp) {
-                  //         accidental = sheet.Accidental.sharp;
-                  //       } else if (p.note.accidental ==
-                  //           music.Accidental.doubleFlat) {
-                  //         accidental = sheet.Accidental.doubleFlat;
-                  //       } else if (p.note.accidental ==
-                  //           music.Accidental.doubleSharp) {
-                  //         accidental = sheet.Accidental.doubleSharp;
-                  //       }
-
-                  //       print(noteToPitch(p));
-
-                  //       if (ref.read(spellWithProvider) ==
-                  //           music.Accidental.sharp) {
-                  //         if (p.note.accidental == music.Accidental.flat) {
-                  //           sheet.ChordNotePart cnp = sheet.ChordNotePart(
-                  //               sheet.Pitch.a0.upN(noteToPitch(p) - 1),
-                  //               accidental: sheet.Accidental.sharp);
-                  //           notes.add(cnp);
-                  //         } else {
-                  //           sheet.ChordNotePart cnp = sheet.ChordNotePart(
-                  //               sheet.Pitch.a0.upN(noteToPitch(p)),
-                  //               accidental: accidental);
-
-                  //           notes.add(cnp);
-                  //         }
-                  //       } else {
-                  //         if (p.note.accidental == music.Accidental.sharp) {
-                  //           sheet.ChordNotePart cnp = sheet.ChordNotePart(
-                  //               sheet.Pitch.a0.upN(noteToPitch(p) + 1),
-                  //               accidental: sheet.Accidental.flat);
-                  //           notes.add(cnp);
-                  //         } else {
-                  //           sheet.ChordNotePart cnp = sheet.ChordNotePart(
-                  //               sheet.Pitch.a0.upN(noteToPitch(p)),
-                  //               accidental: accidental);
-
-                  //           notes.add(cnp);
-                  //         }
-                  //       }
-                  //     }
-                  //   }
-
-                  //   return sheet.SimpleSheetMusic(
-                  //     width: 150,
-                  //     height: 400,
-                  //     measures: [
-                  //       sheet.Measure([
-                  //         const sheet.KeySignature(
-                  //             sheet.KeySignatureType.cMajor),
-                  //         const sheet.Clef(sheet.ClefType.treble),
-                  //         if (f.fingerings.isNotEmpty) sheet.ChordNote(notes),
-                  //       ])
-                  //     ],
-                  //   );
-                  // }),
                   RepaintBoundary(
                     key: _globalKey,
                     child: Container(
@@ -518,31 +298,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                   ),
                 ],
               ),
-              // Text(f.getNotes().toString()),
-              // Builder(
-              //   builder: (context) {
-              //     var notes = f.getNotes().map((e) => e.note).toList();
-              //     var results = possibleChords(notes);
-
-              //     if (results.isEmpty) {
-              //       return Container();
-              //     }
-
-              //     return Column(
-              //       children: results.map((e) => Text(e)).toList() ?? [],
-              //     );
-              //     return Container();
-              //   },
-              // )
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _capturePng,
-        tooltip: 'Save PNG',
-        child: const Icon(Icons.save),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 
@@ -762,6 +521,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   }
 }
 
+
+
 List<String> possibleChords(List<music.Note> notes) {
   if (notes.length < 3) {
     return [];
@@ -854,4 +615,36 @@ int noteToPitch(music.Pitch n) {
   }
 
   return (letterNum < 2 ? (n.octave + 1) : n.octave) * 7 + letterNum;
+}
+
+void saveTextFile(String text, String filename) {
+  final bytes = utf8.encode(text);
+  final web.HTMLAnchorElement anchor =
+      web.document.createElement('a') as web.HTMLAnchorElement
+        ..href = "data:application/octet-stream;base64,${base64Encode(bytes)}"
+        ..style.display = 'none'
+        ..download = filename;
+
+  web.document.body!.appendChild(anchor);
+  anchor.click();
+  web.document.body!.removeChild(anchor);
+}
+
+Future<String> uploadTextFile() {
+  final uploadInput = html.FileUploadInputElement()..accept = '.json';
+  final completer = Completer<String>();
+
+  uploadInput.onChange.listen((event) {
+    final file = uploadInput.files?.first;
+    if (file != null) {
+      final reader = html.FileReader();
+      reader.readAsText(file);
+      reader.onLoad.listen((event) {
+        completer.complete(reader.result as String);
+      });
+    }
+  });
+
+  uploadInput.click();
+  return completer.future;
 }
