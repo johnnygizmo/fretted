@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' as ui;
 import 'package:example/control_drawer.dart';
 import 'package:example/fretboard_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 //import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
@@ -14,6 +16,7 @@ import 'package:web_image_downloader/web_image_downloader.dart';
 import 'dart:convert' show base64Encode, utf8;
 import 'package:web/web.dart' as web;
 import 'dart:html' as html;
+import "dart:js" as js;
 
 void main() {
   runApp(ProviderScope(child: const MyApp()));
@@ -99,32 +102,37 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     //_controller.text = f.name;
     return Scaffold(
       drawer: ControlDrawer(ref: ref),
-         appBar: AppBar(
-          leading: Builder(
-            builder: (context) => IconButton(
-              tooltip: "Settings",
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
+      appBar: AppBar(
+        leading: Builder(
+          builder: (context) => IconButton(
+            tooltip: "Settings",
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
           ),
+        ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
         actions: [
           IconButton(
-            tooltip: "Save Image",
-            onPressed: _capturePng, icon: Icon(Icons.image)),
+              tooltip: "Save Image",
+              onPressed: _capturePng,
+              icon: Icon(Icons.image)),
           IconButton(
-           
-            tooltip: "Save Block Definition",
+              tooltip: "Copy Image to Clipboard",
+              onPressed: (){_capturePng(clipboard: true);},
+              icon: Icon(Icons.copy)),
+              VerticalDivider(),
+          IconButton(
+              tooltip: "Save Block Definition",
               onPressed: () {
                 saveTextFile(jsonEncode(ref.read(fretboardProvider).toJson()),
                     "${ref.read(fretboardProvider).name}.json");
               },
               icon: Icon(Icons.save)),
           IconButton(
-             tooltip: "Load Block Definition",
+              tooltip: "Load Block Definition",
               onPressed: () async {
                 try {
                   String fileContent = await uploadTextFile();
@@ -132,7 +140,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                   ref.read(fretboardProvider.notifier).updateFretboard(f);
                   _controller.text = f.name;
                 } catch (e) {
-                  showToast("Error reading file",context:context);                 
+                  showToast("Error reading file", context: context);
                 }
               },
               icon: Icon(Icons.folder_open)),
@@ -490,38 +498,32 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     );
   }
 
-  Future<void> _capturePng() async {
-    try {
-      await WebImageDownloader.downloadImage(_globalKey,
-          "${ref.read(fretboardProvider).name == "" ? "ChordBlock" : ref.read(fretboardProvider).name}.png");
-      return;
+  Future<void> _capturePng({bool clipboard = false}) async {
+    if (clipboard) {
+      RenderRepaintBoundary? boundary = _globalKey.currentContext!
+          .findRenderObject() as RenderRepaintBoundary?;
+      ui.Image image = await boundary!.toImage(pixelRatio: 2);
+      ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
+    if (pngBytes != null) {
+    final base64Image = base64Encode(pngBytes);
+    js.context.callMethod('copyBase64ImageToClipboard', [base64Image]);
+  }
 
-      // RenderRepaintBoundary? boundary = _globalKey.currentContext!
-      //     .findRenderObject() as RenderRepaintBoundary?;
-
-      // ui.Image image = await boundary!.toImage(pixelRatio: 1);
-
-      // ByteData? byteData =
-      //     await image.toByteData(format: ui.ImageByteFormat.png);
-
-      // Uint8List pngBytes = byteData!.buffer.asUint8List();
-      // //   final blob = html.Blob([pngBytes]);
-      // //   final url = html.Url.createObjectUrlFromBlob(blob);
-      // //   html.Url.revokeObjectUrl(url);
-      // Share.shareXFiles([
-      //   XFile.fromData(pngBytes,
-      //       mimeType: "image/png",
-      //       name: ref.read(fretboardProvider).name + ".png")
-      // ]);
-    } catch (e) {
-      if (kDebugMode) {
-        print(e);
+    } else {
+      try {
+        await WebImageDownloader.downloadImage(_globalKey,
+            "${ref.read(fretboardProvider).name == "" ? "ChordBlock" : ref.read(fretboardProvider).name}.png");
+        return;
+      } catch (e) {
+        if (kDebugMode) {
+          print(e);
+        }
       }
     }
   }
 }
-
-
 
 List<String> possibleChords(List<music.Note> notes) {
   if (notes.length < 3) {
